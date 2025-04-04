@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>In Class Assignment 20</title>
+    <link rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+      #createPost {
+        width: 600px;
+        height: 100px;
+        display: flex;
+      }
+
+      #editPost {
+        width: 600px;
+        height: 100px;
+        display: flex;
+      }
+
+      hr {
+        gap: 10px 0 10px 0;
+        width: 1000px;
+      }
+    </style>
+  </head>
+  <body>
+    <form id="createPost">
+      <input type="text" name="title" placeholder="Title" required />
+      <input name="content" placeholder="Content" required />
+      <button type="submit">Create</button>
+    </form>
+    <table id="postTable">
+      <hr />
+    </table>
+    <div id="editModal" class="modal">
+      <form id="editPost">
+        <input type="hidden" id="editId" name="id" />
+        <input
+          type="text"
+          id="editTitle"
+          name="title"
+          placeholder="Title"
+          required
+        />
+        <input id="editContent" name="content" placeholder="Content" required />
+        <button type="submit">Update</button>
+        <button type="button" id="closeModal">Cancel</button>
+      </form>
+    </div>
+    <script>
+      $(document).ready(function () {
+        function fetchPosts() {
+          $.ajax({
+            url: "/api/posts",
+            type: "GET",
+            dataType: "json",
+            success: function (posts) {
+              console.log("Fetched Posts:", posts);
+              $("#postTable tbody").empty();
+              posts.forEach((post) => {
+                $("#postTable tbody").append(
+                  `<tr data-id="${post.id}">
+                                    <td>${post.id}</td>
+                                    <td>${post.title}</td>
+                                    <td>${post.content}</td>
+                                    <td>
+                                        <button class='delete' data-id='${post.id}'>Delete</button>
+                                    </td>
+                                </tr>`
+                );
+              });
+            },
+            error: function (error) {
+              console.error("Error fetching posts:", error);
+            },
+          });
+        }
+
+        fetchPosts();
+
+        $("#createPost").submit(function (e) {
+          e.preventDefault();
+          let title = $("#title").val().trim();
+          let content = $("#content").val().trim();
+
+          if (!title || !content) {
+            alert("Title and content are required!");
+            return;
+          }
+
+          $.ajax({
+            url: "/api/posts",
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({ title: title, content: content }),
+            success: function (response) {
+              console.log("Post Created:", response);
+              fetchPosts();
+              $("#title").val("");
+              $("#content").val("");
+            },
+            error: function (error) {
+              console.error("Error creating post:", error);
+            },
+          });
+        });
+
+        $(document).on("click", ".delete", function () {
+          let postId = $(this).data("id");
+
+          $.ajax({
+            url: "/api/posts/" + postId,
+            type: "DELETE",
+            success: function (response) {
+              console.log("Post Deleted:", response);
+              fetchPosts();
+            },
+            error: function (error) {
+              console.error("Error deleting post:", error);
+            },
+          });
+        });
+      });
+    </script>
+  </body>
+</html>
